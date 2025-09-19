@@ -1,1 +1,17 @@
 .vscode-server/bin/
+
+# Node.js dependencies
+node_modules/
+
+# Generated files (optional - uncomment if you don't want to commit these)
+# README.html
+# README.pdf
+
+# Test outputs
+tests/
+coverage/
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store
