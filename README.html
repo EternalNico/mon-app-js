@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP Node.js/Jenkins : Intégration Continue et Déploiement</title>
+    
+<style>
+    @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+    }
+    
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #2c3e50;
+        margin-top: 2em;
+        margin-bottom: 1em;
+        font-weight: 600;
+    }
+    
+    h1 {
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+        font-size: 2.5em;
+    }
+    
+    h2 {
+        border-bottom: 2px solid #95a5a6;
+        padding-bottom: 8px;
+        font-size: 2em;
+    }
+    
+    h3 {
+        color: #34495e;
+        font-size: 1.5em;
+    }
+    
+    code {
+        background-color: #f8f9fa;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        color: #e74c3c;
+    }
+    
+    pre {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+        overflow-x: auto;
+        margin: 1em 0;
+    }
+    
+    pre code {
+        background-color: transparent;
+        padding: 0;
+        color: #333;
+    }
+    
+    blockquote {
+        border-left: 4px solid #3498db;
+        margin: 1em 0;
+        padding-left: 20px;
+        color: #7f8c8d;
+        font-style: italic;
+    }
+    
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1em 0;
+    }
+    
+    th, td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+    }
+    
+    th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+    
+    img {
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin: 1em 0;
+    }
+    
+    ul, ol {
+        margin: 1em 0;
+        padding-left: 2em;
+    }
+    
+    li {
+        margin: 0.5em 0;
+    }
+    
+    hr {
+        border: none;
+        border-top: 2px solid #ecf0f1;
+        margin: 2em 0;
+    }
+    
+    .success {
+        color: #27ae60;
+        font-weight: bold;
+    }
+    
+    .error {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+    
+    .warning {
+        color: #f39c12;
+        font-weight: bold;
+    }
+    
+    /* Page break styles pour l'impression */
+    @page {
+        margin: 2cm;
+        size: A4;
+    }
+    
+    .page-break {
+        page-break-before: always;
+    }
+    
+    h1 {
+        page-break-before: always;
+    }
+    
+    h1:first-child {
+        page-break-before: avoid;
+    }
+</style>
+
+</head>
+<body>
+    <h1>TP Node.js/Jenkins : Intégration Continue et Déploiement</h1>
+<h2>Contexte</h2>
+<p>J’ai configuré un environnement sur <strong>VS Code</strong> pointant vers le répertoire de mon conteneur Docker, dans lequel j’ai installé et configuré <strong>Jenkins</strong>. J’ai également installé le plugin <strong>NodeJS</strong> pour Jenkins afin de gérer une pipeline de déploiement pour un projet Node.js.</p>
+<hr>
+<h2>Exercice 1 : Premier déploiement</h2>
+<h3>Étapes réalisées :</h3>
+<ol>
+<li><strong>Installation de Node.js 18 et npm</strong> dans le conteneur Ubuntu.</li>
+<li><strong>Installation des dépendances</strong> du projet avec <code>npm install</code>.</li>
+<li><strong>Ajout du reporter JUnit pour Jest</strong> dans le <code>package.json</code> :<pre><code class="language-json">&quot;jest&quot;: {
+  &quot;reporters&quot;: [
+    &quot;default&quot;,
+    [&quot;jest-junit&quot;, { &quot;outputDirectory&quot;: &quot;tests&quot;, &quot;outputName&quot;: &quot;junit.xml&quot; }]
+  ]
+}
+</code></pre>
+</li>
+<li><strong>Modification du <code>Jenkinsfile</code></strong> pour que Jenkins récupère le rapport de test généré par Jest (<code>test-results.xml</code>).</li>
+<li><strong>Vérification</strong> que le fichier <code>test-results.xml</code> est bien créé après l’exécution des tests.</li>
+</ol>
+<hr>
+<h2>Exercice 2 : Gestion des branches</h2>
+<ol>
+<li><strong>Création d’une branche <code>develop</code></strong> dans le dépôt Git.</li>
+<li><strong>Configuration d’un projet multi-branch</strong> dans Jenkins pour :<ul>
+<li>Récupérer toutes les branches du dépôt.</li>
+<li>Déclencher la pipeline sur les branches <code>main</code> ou <code>develop</code>.</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2>Exercice 3 : Tests et qualité</h2>
+<h3>Ajout d’un test volontairement échoué</h3>
+<p>J’ai ajouté un test incorrect pour simuler une erreur :</p>
+<pre><code class="language-javascript">test(&#39;Tests échoué&#39;, () =&gt; {
+    expect(isValidNumber(Infinity)).toBe(true); // Ce test échoue car `isValidNumber(Infinity)` retourne `false`
+});
+</code></pre>
+<ul>
+<li><p><strong>Résultat initial</strong> :</p>
+<pre><code>expect(received).toBe(expected) // Object.is equality
+Expected: true
+Received: false
+</code></pre>
+<p>Le job de test affichait une erreur dans la <strong>Pipeline Overview</strong>.</p>
+</li>
+<li><p><strong>Après correction</strong> :</p>
+<pre><code>Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+</code></pre>
+<p>Le job de test est passé en <strong>success</strong>.</p>
+</li>
+</ul>
+<hr>
+<h2>Exercice 4 : Configuration avancée</h2>
+<h3>Notifications Discord</h3>
+<p>J’ai créé un <strong>serveur Discord</strong> et configuré un <strong>webhook</strong> pour recevoir des notifications automatiques depuis Jenkins.<br>Dans le <code>Jenkinsfile</code>, j’ai ajouté une section <code>post</code> pour gérer trois cas :</p>
+<ul>
+<li><strong>🟢 Success</strong> : Notification Discord confirmant le succès du déploiement.</li>
+<li><strong>🔴 Failure</strong> : Notification avec l’erreur en cas d’échec.</li>
+<li><strong>⚠️ Unstable</strong> : Notification en cas de warnings ou de build instable.</li>
+</ul>
+<p><strong>Processus</strong> :</p>
+<ol>
+<li>Génération d’un fichier <code>payload.json</code> au format attendu par l’API Discord.</li>
+<li>Envoi du message via <code>curl</code> avec le webhook.</li>
+<li>Suppression du fichier temporaire.</li>
+</ol>
+<p><strong>Résultat</strong> :<br><img src="images/discord.png" alt="Notifications Discord"></p>
+<hr>
+<h3>Couverture de code</h3>
+<ol>
+<li><strong>Installation du plugin Code Coverage API</strong> dans Jenkins.</li>
+<li><strong>Modification du <code>package.json</code></strong> pour générer un rapport Cobertura :<pre><code class="language-json">&quot;jest&quot;: {
+  &quot;collectCoverage&quot;: true,
+  &quot;coverageDirectory&quot;: &quot;coverage&quot;,
+  &quot;coverageReporters&quot;: [&quot;text&quot;, &quot;cobertura&quot;],
+  &quot;rootDir&quot;: &quot;.&quot;,
+  &quot;reporters&quot;: [
+    &quot;default&quot;,
+    [&quot;jest-junit&quot;, { &quot;outputDirectory&quot;: &quot;/tmp/tests&quot;, &quot;outputName&quot;: &quot;junit.xml&quot; }]
+  ]
+}
+</code></pre>
+</li>
+<li><strong>Configuration initiale de <code>publishCoverage</code></strong> avec des seuils :<pre><code class="language-groovy">publishCoverage adapters: [
+    coberturaAdapter(&#39;coverage/cobertura-coverage.xml&#39;)
+],
+failNoReports: true,
+globalThresholds: [
+    [thresholdTarget: &#39;LINE&#39;, unhealthyThreshold: 70.0, unstableThreshold: 80.0],
+    [thresholdTarget: &#39;BRANCH&#39;, unhealthyThreshold: 60.0, unstableThreshold: 70.0]
+]
+</code></pre>
+</li>
+</ol>
+<h4>Problème rencontré</h4>
+<p>Le plugin <strong>Code Coverage API</strong> a généré une <strong><code>NullPointerException</code></strong> car certaines métriques (comme <code>CLASS</code> ou <code>METHOD</code>) étaient manquantes dans le rapport Cobertura. Le plugin tentait d’appliquer des seuils sur des valeurs inexistantes.</p>
+<h4>Solution appliquée</h4>
+<p>J’ai <strong>supprimé la section <code>globalThresholds</code></strong> pour éviter les erreurs :</p>
+<pre><code class="language-groovy">publishCoverage adapters: [
+    coberturaAdapter(&#39;coverage/cobertura-coverage.xml&#39;)
+],
+failNoReports: true
+</code></pre>
+<p>Désormais, Jenkins :</p>
+<ul>
+<li>Analyse le rapport de couverture.</li>
+<li>L’affiche dans l’interface <strong>sans validation bloquante</strong>.</li>
+</ul>
+<p><strong>Vue du rapport dans Jenkins</strong> :<br><img src="images/jenkins_rapport.png" alt="Rapport de couverture"></p>
+<hr>
+<h3>Archivage des artefacts</h3>
+<p>J’ai ajouté une étape pour archiver les artefacts :</p>
+<pre><code class="language-groovy">stage(&#39;Archive Artifacts&#39;) {
+    steps {
+        echo &#39;Archivage des artefacts...&#39;
+        archiveArtifacts artifacts: &#39;coverage/**/*, tests/**/*, dist/**/*&#39;, allowEmptyArchive: true
+    }
+}
+</code></pre>
+<p><strong>Résultat</strong> :<br><img src="images/artefacts.png" alt="Artefacts archivés"></p>
+<hr>
+<h2>Questions de compréhension</h2>
+<h3>1. Différence entre <code>npm install</code> et <code>npm ci</code></h3>
+<ul>
+<li><strong><code>npm install</code></strong> :<br>Installe les dépendances en mettant à jour le <code>package-lock.json</code> si nécessaire. Utile en développement, mais moins adapté à la CI/CD car il peut introduire des variations entre les builds.</li>
+<li><strong><code>npm ci</code></strong> :<br>Installe <strong>exactement</strong> les versions spécifiées dans le <code>package-lock.json</code>. Plus rapide et plus fiable pour des <strong>builds reproductibles</strong> en CI/CD.</li>
+</ul>
+<h3>2. Utilisation de <code>when</code> dans les étapes</h3>
+<p>J’utilise <code>when</code> pour exécuter des étapes <strong>conditionnellement</strong> :</p>
+<ul>
+<li>Exemple : Déployer uniquement sur les branches <code>main</code> ou <code>develop</code>.</li>
+<li>Avantages : Évite des actions inutiles ou dangereuses sur d’autres branches.</li>
+</ul>
+<h3>3. Gestion des erreurs avec les blocs <code>post</code></h3>
+<p>Les blocs <code>post</code> me permettent de :</p>
+<ul>
+<li><strong>Envoyer des notifications</strong> (Discord, email, etc.) selon le résultat du pipeline (<code>success</code>, <code>failure</code>, <code>unstable</code>).</li>
+<li><strong>Exécuter des actions correctives</strong> (ex : nettoyage, rollback).</li>
+</ul>
+<h3>4. Intérêt du backup avant déploiement</h3>
+<p>Avant de déployer une nouvelle version, je sauvegarde l’ancienne. En cas d’échec ou de bug, je peux <strong>restaurer rapidement</strong> l’application à son état précédent.</p>
+<hr>
+<h2>Améliorations possibles</h2>
+<h3>Sécurité</h3>
+<ul>
+<li>Intégrer <strong><code>npm audit</code></strong> ou des outils comme <strong>Snyk</strong> pour scanner automatiquement les vulnérabilités des dépendances.</li>
+</ul>
+<h3>Performance</h3>
+<ul>
+<li><strong>Mettre en cache</strong> <code>node_modules</code> ou les artefacts intermédiaires pour réduire les temps de build.</li>
+</ul>
+<h3>Monitoring</h3>
+<ul>
+<li>Ajouter un <strong>health check automatisé</strong> après le déploiement.</li>
+<li>Utiliser <strong>Prometheus/Grafana</strong> pour surveiller l’état de l’application en temps réel.</li>
+</ul>
+<h3>Rollback</h3>
+<ul>
+<li>Mettre en place un <strong>mécanisme de rollback automatique</strong> si le déploiement échoue ou si le health check détecte un problème.</li>
+</ul>
+<hr>
+<h2>Bilan</h2>
+<p>Ce TP m’a permis de :<br>✅ Configurer une pipeline CI/CD complète avec Jenkins et Node.js.<br>✅ Gérer les tests, la couverture de code, et les notifications.<br>✅ Automatiser des actions post-build (archivage, notifications, backup).<br>✅ Identifier des axes d’amélioration pour la sécurité, la performance et la fiabilité.</p>
+<hr>
+<p><strong>Prochaines étapes</strong> :</p>
+<ul>
+<li>Automatiser davantage les tests de sécurité.</li>
+<li>Optimiser les temps de build avec du caching.</li>
+<li>Implémenter un système de rollback intelligent.</li>
+</ul>
+<hr>
+<h2>Annexes : Configuration des plugins Jenkins (Blue Ocean, Slack, Gitea)</h2>
+<h3>Partie 1 : Installation des plugins</h3>
+<p><strong>Étape 1 : Installation via l&#39;interface Jenkins</strong><br>J&#39;ai ouvert Jenkins (<a href="http://localhost:8080">http://localhost:8080</a>), puis je suis allé dans &quot;Manage Jenkins&quot; → &quot;Manage Plugins&quot;. Dans l&#39;onglet &quot;Available&quot;, j&#39;ai recherché et installé :</p>
+<ul>
+<li>Blue Ocean</li>
+<li>Slack Notification Plugin</li>
+<li>Gitea Plugin (ou Git Plugin)<br>J&#39;ai cliqué sur &quot;Install without restart&quot; et attendu la fin de l&#39;installation.</li>
+</ul>
+<p><strong>Étape 2 : Vérification de l&#39;installation</strong><br>Je suis retourné au tableau de bord Jenkins, j&#39;ai vérifié la présence du bouton &quot;Open Blue Ocean&quot; et la présence des sections Slack et Gitea dans &quot;Manage Jenkins&quot; → &quot;Configure System&quot;.</p>
+<h3>Partie 2 : Configuration du plugin Blue Ocean</h3>
+<p><strong>Qu&#39;est-ce que Blue Ocean ?</strong><br>Blue Ocean est une interface moderne pour Jenkins qui améliore la visualisation des pipelines.</p>
+<p><strong>Résultat</strong> :<br><img src="images/blue_ocean1.png" alt="Blue ocean"></p>
+<p><strong>Configuration</strong><br>J&#39;ai cliqué sur &quot;Open Blue Ocean&quot; dans le menu Jenkins, puis j&#39;ai exploré l&#39;interface : vue des pipelines, éditeur visuel, historique des builds. Blue Ocean n&#39;a pas nécessité de configuration supplémentaire.</p>
+<p><strong>Exercice 2.1</strong> : J&#39;ai créé un pipeline simple via Blue Ocean et j&#39;ai observé la différence avec l&#39;interface classique.</p>
+<p><strong>Résultat</strong> :<br><img src="images/blue_ocean2.png" alt="Blue ocean 2"></p>
+<h3>Partie 3 : Configuration du plugin Slack</h3>
+<p><strong>Étape 1 : Préparation de Slack</strong></p>
+<ul>
+<li>Je suis allé sur <a href="https://api.slack.com/apps">https://api.slack.com/apps</a></li>
+<li>J&#39;ai créé une nouvelle app : &quot;Create New App&quot; → &quot;From scratch&quot;</li>
+<li>J&#39;ai nommé mon app : &quot;Jenkins Notifications&quot;</li>
+<li>Dans &quot;OAuth &amp; Permissions&quot;, j&#39;ai ajouté les permissions :<ul>
+<li>chat:write</li>
+<li>chat:write.public</li>
+</ul>
+</li>
+</ul>
+<p><strong>Étape 2 : Configuration dans Jenkins</strong></p>
+<ul>
+<li>Je suis allé dans &quot;Manage Jenkins&quot; → &quot;Configure System&quot;</li>
+<li>J&#39;ai trouvé la section &quot;Slack&quot;</li>
+<li>J&#39;ai configuré :<ul>
+<li>Workspace : nom de mon workspace Slack</li>
+<li>Credential : J&#39;ai créé une nouvelle credential</li>
+<li>Kind : &quot;Secret text&quot;</li>
+<li>Secret : mon Bot User OAuth Token</li>
+<li>ID : &quot;slack-token&quot;</li>
+<li>Default channel : #general (ou j&#39;ai créé un canal dédié)</li>
+</ul>
+</li>
+<li>J&#39;ai testé la connexion</li>
+</ul>
+<p><strong>Étape 3 : Test des notifications</strong><br>J&#39;ai créé un job simple pour tester :</p>
+<pre><code class="language-groovy">pipeline {
+  agent any
+  stages {
+    stage(&#39;Test&#39;) {
+      steps {
+        echo &#39;Test du pipeline&#39;
+      }
+    }
+  }
+  post {
+    always {
+      slackSend(
+  channel: &#39;#jenkins-notifications&#39;,
+        color: &#39;good&#39;,
+        message: &quot;Test Jenkins - Build ${env.BUILD_NUMBER}&quot;
+      )
+    }
+  }
+}
+</code></pre>
+<p><strong>Exercice 3.1</strong> : J&#39;ai configuré les notifications Slack et j&#39;ai testé avec un pipeline simple.</p>
+<p><strong>Connexion</strong> :<br><img src="images/connexion_slack.png" alt="Connexion Slack"></p>
+<p><strong>Résultat</strong> :<br><img src="images/slack_notification.png" alt="Slack notification"></p>
+<h3>Partie 4 : Configuration du plugin Gitea</h3>
+<p><strong>Étape 1 : Configuration des credentials Git</strong></p>
+<ul>
+<li>Je suis allé dans &quot;Manage Jenkins&quot; → &quot;Manage Credentials&quot;</li>
+<li>J&#39;ai ajouté une nouvelle credential :<ul>
+<li>Kind : Username with password</li>
+<li>Username : mon nom d&#39;utilisateur Git</li>
+<li>Password : mon mot de passe ou token</li>
+<li>ID : git-credentials</li>
+</ul>
+</li>
+</ul>
+<p><strong>Étape 2 : Configuration des webhooks (optionnel)</strong><br>Si j&#39;ai utilisé Gitea :</p>
+<ul>
+<li>Dans mon repository Gitea, je suis allé dans &quot;Settings&quot; → &quot;Webhooks&quot;</li>
+<li>J&#39;ai ajouté un webhook :<ul>
+<li>URL : <a href="http://jenkins-url:8080/gitea-webhook/post">http://jenkins-url:8080/gitea-webhook/post</a></li>
+<li>Content Type : application/json</li>
+<li>Events : Push events</li>
+</ul>
+</li>
+</ul>
+<p><strong>Étape 3 : Test avec un repository</strong></p>
+<ul>
+<li>J&#39;ai créé un job multibranch pipeline :<ul>
+<li>&quot;New Item&quot; → &quot;Multibranch Pipeline&quot;</li>
+<li>J&#39;ai configuré la source Git :<ul>
+<li>Repository URL : URL de mon repository</li>
+<li>Credentials : j&#39;ai sélectionné git-credentials</li>
+</ul>
+</li>
+<li>J&#39;ai sauvegardé</li>
+</ul>
+</li>
+</ul>
+<p><strong>Exercice 4.1</strong> : J&#39;ai connecté un repository Git et j&#39;ai configuré un pipeline automatique.</p>
+<p><strong>Résultat</strong> :<br><img src="images/slack_notification2.png" alt="Slack notification 2"></p>
+<h3>Partie 5 : Pipeline intégré avec les trois plugins</h3>
+<p><strong>Exemple de Jenkinsfile complet</strong></p>
+<pre><code class="language-groovy">pipeline {
+  agent any
+  stages {
+    stage(&#39;Checkout&#39;) {
+      steps {
+        echo &#39;Récupération du code&#39;
+        checkout scm
+      }
+    }
+    stage(&#39;Build&#39;) {
+      steps {
+        echo &#39;Construction de l\&#39;application&#39;
+        // Ajoutez vos commandes de build ici
+      }
+    }
+    stage(&#39;Test&#39;) {
+      steps {
+        echo &#39;Exécution des tests&#39;
+        // Ajoutez vos commandes de test ici
+      }
+    }
+    stage(&#39;Deploy&#39;) {
+      when {
+        branch &#39;main&#39;
+      }
+      steps {
+        echo &#39;Déploiement en production&#39;
+        // Ajoutez vos commandes de déploiement ici
+      }
+    }
+  }
+  post {
+    success {
+      slackSend(
+        channel: &#39;#general&#39;,
+        color: &#39;good&#39;,
+        message: &quot;&quot;&quot;
+        Build réussi !\nProjet: ${env.JOB_NAME}\nBuild: ${env.BUILD_NUMBER}\nBranche: ${env.BRANCH_NAME}&quot;
+      )
+    }
+    failure {
+      slackSend(
+        channel: &#39;#general&#39;,
+        color: &#39;danger&#39;,
+        message: &quot;&quot;&quot;
+        Build échoué !\nProjet: ${env.JOB_NAME}\nBuild: ${env.BUILD_NUMBER}\nVoir: ${env.BUILD_URL}&quot;
+      )
+    }
+  }
+}
+</code></pre>
+<p><strong>Test du pipeline intégré</strong><br>J&#39;ai créé un repository avec ce Jenkinsfile, configuré le job multibranch pipeline, puis fait un push pour déclencher le build. J&#39;ai vérifié la visualisation dans Blue Ocean, les notifications Slack et l&#39;intégration Git.</p>
+<p><strong>Exercice 5.1</strong> : J&#39;ai créé un pipeline complet utilisant les trois plugins et j&#39;ai testé toutes les fonctionnalités.</p>
+<p><strong>Résultat</strong> :<br><img src="images/blue_ocean3.png" alt="Blue ocean 3"></p>
+<h3>Partie 5 : Pipeline intégré avec les trois plugins</h3>
+<p>Grâce à l’ajout du code fourni dans le TP, j’ai pu lancer des pipelines paramétrés : je peux choisir l’environnement de déploiement (dev, staging ou prod) et activer ou non l’option pour ignorer les tests avant le déploiement.</p>
+<p>Voici un test de lancement de pipeline avec paramètre comme le montre l&#39;image ci-dessous : </p>
+<p><strong>IHM Jenkins pipeline avec paramètres</strong> :<br><img src="images/pipeline_parameter.png" alt="Pipeline parameter"></p>
+<p><strong>Résultat de la pipeline (avec &quot;skip tests&quot;)</strong> :<br><img src="images/pipeline_parameter2.png" alt="Pipeline parameter2"></p>
+<p>Voici le résultat sans la case cocher &quot;skip test&quot;</p>
+<p><strong>Résultat de la pipeline (sans &quot;skip tests&quot;)</strong> :<br><img src="images/pipeline_parameter3.png" alt="Pipeline parameter3"></p>
+
+    
+    <div style="margin-top: 3em; padding-top: 2em; border-top: 2px solid #ecf0f1; text-align: center; color: #7f8c8d; font-size: 0.9em;">
+        <p>Document généré automatiquement à partir du README.md</p>
+        <p>Généré le : 19/09/2025 07:30:23</p>
+    </div>
+</body>
+</html>
